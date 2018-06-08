@@ -112,9 +112,7 @@ function createResponse(entry) {
 
 async function open(url) {
     let frame = document.createElement('iframe');
-    let resp = await fetch(url);
-    let body = await resp.text();
-    frame.srcdoc = `<base href='${url}'>` + body;
+    frame.src = `loadMainResource?url=${url}`;
     document.getElementById('drop-area').hidden = true;
     document.body.appendChild(frame);
 }
