@@ -1,3 +1,6 @@
+self.addEventListener('install', (e) => {
+  e.waitUntil(self.skipWaiting());
+});
 self.addEventListener('activate', (e) => {
   e.waitUntil(self.clients.claim());
 });
@@ -18,9 +21,8 @@ self.addEventListener('fetch', (e) => {
         }
         console.log(e.request.url);
         let resp = await caches.match(e.request);
-        if (!resp) {
+        if (!resp)
             resp = await fetch(e.request);
-        }
         return resp;
     })());
 });
