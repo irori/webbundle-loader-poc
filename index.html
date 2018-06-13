@@ -1,17 +1,34 @@
 <!DOCTYPE html>
+<title>WebBundle loading demo</title>
 <style>
+  body {
+      font-family: Arial;
+  }
   #drop-area {
       width: 100vw;
       height: 100vh;
-      font-size: xx-large;
   }
   iframe {
       width: 100vw;
       height: 100vh;
   }
 </style>
+
 <div id="drop-area" ondragover="event.preventDefault()">
-  Drop WebBundle here!
+<h1>Drop WebBundle here!</h1>
+<h2>Usage</h2>
+<ol>
+ <li>Create a webbundle file with <a href="https://github.com/WICG/webpackage/tree/master/go/bundle/cmd/gen-bundle">gen-bundle</a> tool.
+ <li>(Optional) Open devtools network tab, check "Offline".
+ <li>Drag & drop the webbundle file into this page.
+</ol>
+
+<h2>How it works</h2>
+<p>
+  This page installs a Service Worker so that resources can be served from Cache Storage. When a webbundle file is dropped, this page extracts request / response pairs from it, and puts them into the Cache Storage. Then, it creates an iframe whose content is
+  <pre>&lt;base href="main_resource_url"&gt; + main_resource_content</pre>
+  assuming that the first resource in the bundle is the main resource.
+</p>
 </div>
 <script src="cbor.js"></script>
 <script src="unbundle.js"></script>
