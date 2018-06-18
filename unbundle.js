@@ -8,11 +8,6 @@ class Bundle {
         this.entries = this.createEntries();
     }
 
-    section(name) {
-        let sections = Array.from(this.section_offsets.keys()).sort((a, b) => b[1][0] - b[1][0]);
-        return this.cbor[2][sections.indexOf(name)];
-    }
-
     createSections() {
         let section_offsets = CBOR.decode(toArrayBuffer(this.cbor[1]));
         // Sort sections in ascending order of offset
