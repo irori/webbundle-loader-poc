@@ -21,8 +21,11 @@ self.addEventListener('fetch', (e) => {
         }
         console.log(e.request.url);
         let resp = await caches.match(e.request);
-        if (!resp)
+        if (!resp) {
+            if (e.request.cache === 'only-if-cached')
+                event.request.mode = 'same-origin';
             resp = await fetch(e.request);
+        }
         return resp;
     })());
 });
