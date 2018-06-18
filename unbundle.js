@@ -78,8 +78,14 @@ async function onDrop(file) {
 
 async function populateCache(name, entries) {
     let cache = await caches.open(name);
+    let seen = new Set();
     for (let entry of entries) {
         let request = createRequest(entry);
+        // Skip if this request is already seen (just to work-around
+        // dup'ed entries for HAR-generated bundles).
+        if (seen.has(request.url))
+            continue;
+        seen.add(request.url);
         if (request.method !== 'GET')
             continue;
         await cache.put(request, createResponse(entry));
@@ -104,8 +110,28 @@ function createResponse(entry) {
         if (name[0] != ':')
             headers.set(name, value);
     }
+
+    // Default to 200 if status is not given.
+    let status = entry.responseHeaders.get(':status');
+    if (status == null || status == undefined || status == 0)
+        status = 200;
+
+    // Response body must be null if status are one of 101, 204, 205 or 304.
+    if (status == 101 || status == 204 || status == 205 || status == 304)
+        entry.payload = null;
+
+    // Responses with Vary: '*' cannot be put into Cache.
+    let vary = headers.get('vary');
+    if (vary) {
+        let varies = vary.split(',');
+        let index = varies.indexOf('*');
+        if (index > -1)
+            varies.splice(index, 1);
+        headers.set('vary', varies.join(','));
+    }
+
     return new Response(entry.payload, {
-        status: entry.responseHeaders.get(':status'),
+        status: status,
         headers
     });
 }
