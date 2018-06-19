@@ -23,12 +23,8 @@
  <li>Drag & drop the webbundle file into this page.
 </ol>
 
-<h2>How it works</h2>
-<p>
-  This page installs a Service Worker so that resources can be served from Cache Storage. When a webbundle file is dropped, this page extracts request / response pairs from it, and puts them into the Cache Storage. Then, it creates an iframe whose content is
-  <pre>&lt;base href="main_resource_url"&gt; + main_resource_content</pre>
-  assuming that the first resource in the bundle is the main resource.
-</p>
+<p><a href="https://github.com/irori/webbundle-loader-poc">View on GitHub</a></p>
+
 </div>
 <script src="cbor.js"></script>
 <script src="unbundle.js"></script>
