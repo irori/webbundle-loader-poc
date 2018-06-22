@@ -1,4 +1,60 @@
+// After https://github.com/WICG/webpackage/pull/226
 class Bundle {
+    constructor(cbor_buf) {
+        let cbor = this.cbor = CBOR.decode(cbor_buf);
+        this.magic = toStr(this.cbor[0]);
+        this.sections = this.createSections();
+        this.index = this.createIndex();
+        this.responses = this.createResponses();
+        this.entries = this.createEntries();
+    }
+
+    createSections() {
+        let section_lengths = CBOR.decode(toArrayBuffer(this.cbor[1]));
+        let sections = new Map();
+        if (this.cbor[2].length * 2 != section_lengths.length)
+            throw "unexpected section_lengths size";
+        for (let i = 0; i < this.cbor[2].length; i++)
+            sections.set(section_lengths[i*2], this.cbor[2][i]);
+        return sections;
+    }
+
+    createIndex() {
+        let index = []
+        let cbor = this.sections.get('index');
+        for (let i = 0; i < cbor.length; i += 2)
+            index.push({headers: this.convertHeaders(cbor[i]), length: cbor[i+1]});
+        return index;
+    }
+
+    createResponses() {
+        return this.sections.get('responses').map((resp) => {
+            let [headers, payload] = resp;
+            return {headers: this.convertHeaders(CBOR.decode(toArrayBuffer(headers))), payload}
+        });
+    }
+
+    createEntries() {
+        // Sort indices in ascending order of offset
+        let entries = [];
+        for (let i = 0; i < this.index.length; i++)
+            entries.push({requestHeaders: this.index[i].headers,
+                          responseHeaders: this.responses[i].headers,
+                          payload: this.responses[i].payload});
+        return entries;
+    }
+
+    // Map<bytes, bytes> => Map<string, string>
+    convertHeaders(headers) {
+        let h = new Map();
+        for (let [key, val] of headers)
+            h.set(toStr(key), toStr(val));
+        return h;
+    }
+}
+
+// Before https://github.com/WICG/webpackage/pull/226
+class BundleOld {
     constructor(cbor_buf) {
         let cbor = this.cbor = CBOR.decode(cbor_buf);
         this.magic = toStr(this.cbor[0]);
@@ -62,9 +118,17 @@ let toStr = (array) =>
 
 // Loader --------------------------------
 
+function createBundle(buf) {
+    try {
+        return new Bundle(buf);
+    } catch (_) {
+        return new BundleOld(buf);
+    }
+}
+
 async function onDrop(file) {
     let buf = await readFileAsArrayBuffer(file);
-    let bundle = new Bundle(buf);
+    let bundle = createBundle(buf);
     window.bundle = bundle;
     await populateCache(file.name, bundle.entries);
     let main_resource_url = bundle.entries[0].requestHeaders.get(':url');
